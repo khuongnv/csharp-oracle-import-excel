@@ -25,26 +25,47 @@
 
 ## Cài đặt và chạy
 
-### 1. Clone repository
-```bash
-git clone <repository-url>
-cd ExcelToOracleImporter
-```
+### Cách 1: Sử dụng Visual Studio 2022 (Khuyến nghị)
+1. **Clone repository**
+   ```bash
+   git clone https://github.com/khuongnv/csharp-oracle-import-excel.git
+   cd csharp-oracle-import-excel
+   ```
 
-### 2. Restore packages
-```bash
-dotnet restore
-```
+2. **Mở solution**
+   - Mở Visual Studio 2022
+   - File → Open → Project/Solution
+   - Chọn file `ExcelToOracleImporter.sln`
 
-### 3. Build project
-```bash
-dotnet build
-```
+3. **Restore packages**
+   - Visual Studio sẽ tự động restore packages
+   - Hoặc nhấn chuột phải vào Solution → Restore NuGet Packages
 
-### 4. Chạy ứng dụng
-```bash
-dotnet run
-```
+4. **Build và chạy**
+   - Nhấn F5 hoặc Ctrl+F5 để chạy
+   - Hoặc Build → Build Solution
+
+### Cách 2: Sử dụng .NET CLI
+1. **Clone repository**
+   ```bash
+   git clone https://github.com/khuongnv/csharp-oracle-import-excel.git
+   cd csharp-oracle-import-excel
+   ```
+
+2. **Restore packages**
+   ```bash
+   dotnet restore
+   ```
+
+3. **Build project**
+   ```bash
+   dotnet build
+   ```
+
+4. **Chạy ứng dụng**
+   ```bash
+   dotnet run
+   ```
 
 ## Hướng dẫn sử dụng
 
@@ -117,14 +138,16 @@ File Excel không có dữ liệu!
 ### Cấu trúc project
 ```
 ExcelToOracleImporter/
-├── ExcelToOracleImporter.csproj
-├── MainForm.cs              # Giao diện chính
-├── Program.cs               # Entry point
-├── AppConfig.cs             # Quản lý cấu hình JSON
-├── FileLogger.cs            # Ghi log ra file
-├── config.json              # File cấu hình (tự tạo)
-├── logs/                    # Thư mục chứa log files
-└── README.md               # Hướng dẫn này
+├── ExcelToOracleImporter.sln    # Visual Studio Solution file
+├── ExcelToOracleImporter.csproj # Project file
+├── MainForm.cs                  # Giao diện chính
+├── Program.cs                   # Entry point
+├── AppConfig.cs                 # Quản lý cấu hình JSON
+├── FileLogger.cs                # Ghi log ra file
+├── .gitignore                   # Git ignore file
+├── config.json                  # File cấu hình (tự tạo)
+├── logs/                        # Thư mục chứa log files
+└── README.md                   # Hướng dẫn này
 ```
 
 ### Tính năng mới v2.0
