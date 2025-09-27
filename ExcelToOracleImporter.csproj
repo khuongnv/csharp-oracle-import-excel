@@ -6,6 +6,16 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    
+    <!-- Version and Author Information -->
+    <AssemblyVersion>2.1.0.0</AssemblyVersion>
+    <FileVersion>2.1.0.0</FileVersion>
+    <Version>2.1.0</Version>
+    <Authors>khuongnv@live.com</Authors>
+    <Company>VNPT</Company>
+    <Product>Excel to Oracle Database Importer</Product>
+    <Description>Import Excel data to Oracle Database with JSON config and file logging</Description>
+    <Copyright>Copyright © 2025 khuongnv@live.com</Copyright>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,6 +1,11 @@
-# Excel to Oracle Database Importer
+# Excel to Oracle Database Importer v2.1.0
 
 Ứng dụng Windows Forms để import dữ liệu từ file Excel (.xlsx, .xls) vào Oracle Database.
+
+**Author**: khuongnv@live.com  
+**Company**: VNPT  
+**Version**: 2.1.0  
+**Copyright**: © 2025 khuongnv@live.com
 
 ## Tính năng
 
@@ -8,7 +13,9 @@
 - ✅ Hỗ trợ file có header hoặc không có header
 - ✅ Tự động tạo bảng trong Oracle với tên cột phù hợp
 - ✅ Preview dữ liệu trước khi import
-- ✅ Batch processing với progress bar
+- ✅ **True Batch Insert** - Sử dụng Oracle Array Binding để insert nhiều dòng cùng lúc
+- ✅ **Batch Size Configuration** - Cấu hình số dòng insert mỗi lần (hiệu suất cao)
+- ✅ Progress bar và logging chi tiết
 - ✅ Test kết nối Oracle database
 - ✅ Log chi tiết quá trình import
 - ✅ Xử lý lỗi và validation đầu vào
@@ -83,7 +90,11 @@
 ### 3. Cấu hình import
 - **Table Name**: Tên bảng sẽ được tạo trong Oracle (mặc định: EXCEL_IMPORT)
 - **Has Header**: Check nếu dòng đầu tiên là tên cột
-- **Batch Size**: Số dòng xử lý mỗi batch (mặc định: 100)
+- **Batch Size**: Số dòng insert mỗi lần (mặc định: 100)
+  - **File nhỏ (< 1K dòng)**: 50-100 → Progress mịn
+  - **File trung bình (1K-10K dòng)**: 100-500 → Cân bằng hiệu suất
+  - **File lớn (> 10K dòng)**: 500-1000 → Hiệu suất tối ưu
+  - **File rất lớn (> 100K dòng)**: 1000-2000 → Throughput cao nhất
 
 ### 4. Import dữ liệu
 - Nhấn "Import Data" để bắt đầu import

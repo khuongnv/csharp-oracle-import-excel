@@ -28,6 +28,7 @@ namespace ExcelToOracleImporter
         private CheckBox chkHasHeader;
         private AppConfig config;
         private Button btnOpenLogs;
+        private MenuStrip menuStrip;
 
         public MainForm()
         {
@@ -47,10 +48,19 @@ namespace ExcelToOracleImporter
             this.SuspendLayout();
 
             // Form properties
-            this.Text = "Excel to Oracle Database Importer";
+            this.Text = "Excel to Oracle Database Importer v2.1.0";
             this.Size = new System.Drawing.Size(900, 700);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.MaximizeBox = false;
+
+            // Menu Strip
+            menuStrip = new MenuStrip();
+            var helpMenu = new ToolStripMenuItem("Help");
+            var aboutMenuItem = new ToolStripMenuItem("About", null, (s, e) => ShowAboutDialog());
+            helpMenu.DropDownItems.Add(aboutMenuItem);
+            menuStrip.Items.Add(helpMenu);
+            this.Controls.Add(menuStrip);
+            this.MainMenuStrip = menuStrip;
 
             // Connection String
             var lblConnectionString = new Label
@@ -511,28 +521,54 @@ namespace ExcelToOracleImporter
 
         private async Task CreateOracleTable(List<string> columnNames)
         {
-            LogMessage("Tạo bảng trong Oracle database...");
+            LogMessage("Kiểm tra và tạo bảng trong Oracle database...");
             FileLogger.LogInfo($"Creating Oracle table: {txtTableName.Text}");
 
             using (var connection = new OracleConnection(txtConnectionString.Text))
             {
                 await connection.OpenAsync();
 
-                // Drop table nếu đã tồn tại
-                var dropSql = $"DROP TABLE {txtTableName.Text}";
-                try
+                // Check table tồn tại và có dữ liệu không
+                var tableExists = await CheckTableExists(connection);
+                if (tableExists)
                 {
-                    using (var dropCommand = new OracleCommand(dropSql, connection))
+                    var hasData = await CheckTableHasData(connection);
+                    
+                    if (hasData)
                     {
-                        await dropCommand.ExecuteNonQueryAsync();
+                        LogMessage($"⚠️ Bảng '{txtTableName.Text}' đã tồn tại và có dữ liệu!");
+                        FileLogger.LogInfo($"Table {txtTableName.Text} exists and contains data");
+                        
+                        var result = MessageBox.Show(
+                            $"Bảng '{txtTableName.Text}' đã tồn tại và có dữ liệu.\n\n" +
+                            "Bạn muốn:\n" +
+                            "• YES: Xóa bảng cũ và tạo mới (MẤT DỮ LIỆU)\n" +
+                            "• NO: Hủy import\n" +
+                            "• RETRY: Nhập tên bảng khác",
+                            "Bảng đã tồn tại",
+                            MessageBoxButtons.YesNoCancel,
+                            MessageBoxIcon.Warning);
+
+                        if (result == DialogResult.Yes)
+                        {
+                            LogMessage($"Đang xóa bảng cũ: {txtTableName.Text}");
+                            await DropTable(connection);
+                        }
+                        else if (result == DialogResult.Retry)
+                        {
+                            // User sẽ nhập tên bảng mới trong UI
+                            throw new Exception("Vui lòng nhập tên bảng khác và thử lại!");
+                        }
+                        else
+                        {
+                            throw new Exception("Import đã bị hủy bởi user!");
+                        }
                     }
-                    LogMessage($"Đã xóa bảng cũ: {txtTableName.Text}");
-                    FileLogger.LogInfo($"Dropped existing table: {txtTableName.Text}");
-                }
-                catch
-                {
-                    // Bảng chưa tồn tại, bỏ qua
-                    FileLogger.LogInfo($"Table {txtTableName.Text} did not exist, skipping drop");
+                    else
+                    {
+                        LogMessage($"Bảng '{txtTableName.Text}' đã tồn tại nhưng trống - đang xóa và tạo mới");
+                        await DropTable(connection);
+                    }
                 }
 
                 // Tạo bảng mới
@@ -549,14 +585,65 @@ namespace ExcelToOracleImporter
             }
         }
 
+        private async Task<bool> CheckTableExists(OracleConnection connection)
+        {
+            var checkSql = $@"
+                SELECT COUNT(*) 
+                FROM USER_TABLES 
+                WHERE TABLE_NAME = UPPER('{txtTableName.Text}')";
+
+            using (var command = new OracleCommand(checkSql, connection))
+            {
+                var result = await command.ExecuteScalarAsync();
+                return Convert.ToInt32(result) > 0;
+            }
+        }
+
+        private async Task<bool> CheckTableHasData(OracleConnection connection)
+        {
+            var countSql = $"SELECT COUNT(*) FROM {txtTableName.Text}";
+
+            try
+            {
+                using (var command = new OracleCommand(countSql, connection))
+                {
+                    var result = await command.ExecuteScalarAsync();
+                    return Convert.ToInt32(result) > 0;
+                }
+            }
+            catch
+            {
+                // Nếu không query được, giả sử có dữ liệu
+                return true;
+            }
+        }
+
+        private async Task DropTable(OracleConnection connection)
+        {
+            var dropSql = $"DROP TABLE {txtTableName.Text}";
+            using (var dropCommand = new OracleCommand(dropSql, connection))
+            {
+                await dropCommand.ExecuteNonQueryAsync();
+            }
+            LogMessage($"✓ Đã xóa bảng cũ: {txtTableName.Text}");
+            FileLogger.LogInfo($"Dropped existing table: {txtTableName.Text}");
+        }
+
         private async Task InsertDataToOracle(ExcelWorksheet worksheet, int rowCount, int colCount, List<string> columnNames, int dataStartRow)
         {
-            LogMessage("Bắt đầu insert dữ liệu...");
-            FileLogger.LogInfo("Starting data insertion process");
+            LogMessage("Bắt đầu insert dữ liệu theo batch...");
+            FileLogger.LogInfo("Starting batch data insertion process");
 
             var batchSize = (int)numBatchSize.Value;
             var totalDataRows = rowCount - dataStartRow + 1;
             var processedRows = 0;
+
+            // Auto-adjust batch size based on data volume for better performance
+            if (totalDataRows > 10000 && batchSize < 500)
+            {
+                var suggestedBatchSize = Math.Min(1000, totalDataRows / 20);
+                LogMessage($"💡 Gợi ý: File lớn ({totalDataRows} dòng) - nên dùng batch size {suggestedBatchSize} để tăng hiệu suất");
+            }
 
             FileLogger.LogInfo($"Batch size: {batchSize}, Total data rows: {totalDataRows}");
 
@@ -570,50 +657,66 @@ namespace ExcelToOracleImporter
 
                 using (var command = new OracleCommand(insertSql, connection))
                 {
-                    // Thêm parameters
+                    // Chuẩn bị array parameters cho batch insert
+                    var parameterArrays = new Dictionary<string, string[]>();
                     foreach (var col in columnNames)
                     {
-                        command.Parameters.Add($":{col}", OracleDbType.Varchar2);
+                        parameterArrays[col] = new string[batchSize];
+                        command.Parameters.Add($":{col}", OracleDbType.Varchar2, batchSize);
                     }
 
-                    // Insert dữ liệu theo batch
-                    for (int row = dataStartRow; row <= rowCount; row++)
+                    // Xử lý dữ liệu theo batch
+                    for (int startRow = dataStartRow; startRow <= rowCount; startRow += batchSize)
                     {
-                        for (int col = 1; col <= colCount; col++)
+                        var currentBatchSize = Math.Min(batchSize, rowCount - startRow + 1);
+                        
+                        // Chuẩn bị dữ liệu cho batch hiện tại
+                        for (int i = 0; i < currentBatchSize; i++)
                         {
-                            var cellValue = worksheet.Cells[row, col].Value?.ToString() ?? "";
-                            command.Parameters[$":{columnNames[col - 1]}"].Value = cellValue.Length > 4000 ? cellValue.Substring(0, 4000) : cellValue;
+                            var currentRow = startRow + i;
+                            for (int col = 1; col <= colCount; col++)
+                            {
+                                var cellValue = worksheet.Cells[currentRow, col].Value?.ToString() ?? "";
+                                var cleanValue = cellValue.Length > 4000 ? cellValue.Substring(0, 4000) : cellValue;
+                                parameterArrays[columnNames[col - 1]][i] = cleanValue;
+                            }
                         }
 
+                        // Set array values cho parameters
+                        foreach (var col in columnNames)
+                        {
+                            command.Parameters[$":{col}"].Value = parameterArrays[col];
+                        }
+
+                        // Execute batch insert
+                        command.ArrayBindCount = currentBatchSize;
                         await command.ExecuteNonQueryAsync();
-                        processedRows++;
+                        
+                        processedRows += currentBatchSize;
 
                         // Log progress
-                        if (processedRows % batchSize == 0 || processedRows == totalDataRows)
+                        var percentage = (processedRows * 100) / totalDataRows;
+                        LogMessage($"Đã import {processedRows}/{totalDataRows} dòng ({percentage}%) - Batch size: {currentBatchSize}");
+                        FileLogger.LogInfo($"Import progress: {processedRows}/{totalDataRows} rows ({percentage}%) - Batch size: {currentBatchSize}");
+                        
+                        // Update progress bar
+                        if (progressBar.InvokeRequired)
                         {
-                            var percentage = (processedRows * 100) / totalDataRows;
-                            LogMessage($"Đã import {processedRows}/{totalDataRows} dòng ({percentage}%)...");
-                            FileLogger.LogInfo($"Import progress: {processedRows}/{totalDataRows} rows ({percentage}%)");
-                            
-                            // Update progress bar if we're on UI thread
-                            if (progressBar.InvokeRequired)
-                            {
-                                progressBar.Invoke(new Action(() => {
-                                    progressBar.Style = ProgressBarStyle.Continuous;
-                                    progressBar.Value = Math.Min(100, percentage);
-                                }));
-                            }
-                            else
-                            {
+                            progressBar.Invoke(new Action(() => {
                                 progressBar.Style = ProgressBarStyle.Continuous;
                                 progressBar.Value = Math.Min(100, percentage);
-                            }
+                            }));
+                        }
+                        else
+                        {
+                            progressBar.Style = ProgressBarStyle.Continuous;
+                            progressBar.Value = Math.Min(100, percentage);
                         }
                     }
                 }
 
-                LogMessage($"✓ Hoàn thành import {totalDataRows} dòng dữ liệu!");
-                FileLogger.LogSuccess($"Data insertion completed successfully: {totalDataRows} rows imported to table {txtTableName.Text}");
+                LogMessage($"✓ Hoàn thành import {totalDataRows} dòng dữ liệu theo batch!");
+                FileLogger.LogSuccess($"Batch data insertion completed successfully: {totalDataRows} rows imported to table {txtTableName.Text} using batch size {batchSize}");
             }
         }
 
@@ -652,6 +755,23 @@ namespace ExcelToOracleImporter
             {
                 MessageBox.Show($"Error opening logs folder: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 FileLogger.LogError("Error opening logs folder", ex);
+            }
+        }
+
+        private void ShowAboutDialog()
+        {
+            try
+            {
+                using (var aboutForm = new AboutForm())
+                {
+                    aboutForm.ShowDialog(this);
+                }
+                FileLogger.LogInfo("About dialog opened");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error showing about dialog: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                FileLogger.LogError("Error showing about dialog", ex);
             }
         }
     }
