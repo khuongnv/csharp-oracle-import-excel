@@ -1,9 +1,22 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
 
 namespace ExcelToOracleImporter
 {
+    public class ConnectionStringItem
+    {
+        public string Id { get; set; } = "";
+        public string Name { get; set; } = "";
+        public string ConnectionString { get; set; } = "";
+        public int Order { get; set; } = 0;
+        
+        public override string ToString()
+        {
+            return Name;
+        }
+    }
     public class AppConfig
     {
         public string ConnectionString { get; set; } = "";
@@ -11,6 +24,9 @@ namespace ExcelToOracleImporter
         public bool HasHeader { get; set; } = true;
         public int BatchSize { get; set; } = 100;
         public string LastExcelFilePath { get; set; } = "";
+        public int SelectedSheetIndex { get; set; } = 0;
+        public List<ConnectionStringItem> ConnectionStrings { get; set; } = new List<ConnectionStringItem>();
+        public string SelectedConnectionId { get; set; } = "";
 
         private static readonly string ConfigPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json");
 
