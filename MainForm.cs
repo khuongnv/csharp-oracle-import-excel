@@ -16,7 +16,9 @@ namespace ExcelToOracleImporter
     public partial class MainForm : Form
     {
         private MenuStrip menuStrip;
+        private QuickImportTab quickImportTab;
         private ImportTab importTab;
+        private ExportTab exportTab;
         private ConnectionManagementTab connectionTab;
         private AppConfig config;
 
@@ -48,10 +50,20 @@ namespace ExcelToOracleImporter
             // Menu Strip
             menuStrip = new MenuStrip();
             
+            // Quick Import Menu
+            var quickImportMenu = new ToolStripMenuItem("Quick Import");
+            quickImportMenu.Click += (s, e) => ShowQuickImportTab();
+            menuStrip.Items.Add(quickImportMenu);
+            
             // Import Excel Menu
             var importMenu = new ToolStripMenuItem("Import Excel");
             importMenu.Click += (s, e) => ShowImportTab();
             menuStrip.Items.Add(importMenu);
+            
+            // Export Excel Menu
+            var exportMenu = new ToolStripMenuItem("Export Excel");
+            exportMenu.Click += (s, e) => ShowExportTab();
+            menuStrip.Items.Add(exportMenu);
             
             // Connection Management Menu
             var connectionMenu = new ToolStripMenuItem("Connection Management");
@@ -75,6 +87,11 @@ namespace ExcelToOracleImporter
 
         private void InitializeTabs()
         {
+            // Create Quick Import Tab
+            quickImportTab = new QuickImportTab();
+            quickImportTab.LogMessageRequested += (sender, message) => FileLogger.LogInfo(message);
+            quickImportTab.StatusUpdateRequested += (sender, status) => { /* Handle status update */ };
+
             // Create Import Tab
             importTab = new ImportTab();
             importTab.LogMessageRequested += (sender, message) => FileLogger.LogInfo(message);
@@ -85,6 +102,11 @@ namespace ExcelToOracleImporter
                 FileLogger.LogInfo("Configuration saved from ImportTab");
             };
             importTab.ConfigurationLoadRequested += (sender, cfg) => { /* Handle config load */ };
+
+            // Create Export Tab
+            exportTab = new ExportTab();
+            exportTab.LogMessageRequested += (sender, message) => FileLogger.LogInfo(message);
+            exportTab.StatusUpdateRequested += (sender, status) => { /* Handle status update */ };
 
             // Create Connection Management Tab
             connectionTab = new ConnectionManagementTab();
@@ -99,10 +121,22 @@ namespace ExcelToOracleImporter
             connectionTab.ConfigurationLoadRequested += (sender, cfg) => { /* Handle config load */ };
 
             // Add UserControls to form
+            quickImportTab.Location = new System.Drawing.Point(0, 24);
+            quickImportTab.Size = new System.Drawing.Size(1000, 676);
+            quickImportTab.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            this.Controls.Add(quickImportTab);
+
             importTab.Location = new System.Drawing.Point(0, 24);
             importTab.Size = new System.Drawing.Size(1000, 676);
             importTab.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            importTab.Visible = false; // Ẩn ban đầu
             this.Controls.Add(importTab);
+
+            exportTab.Location = new System.Drawing.Point(0, 24);
+            exportTab.Size = new System.Drawing.Size(1000, 676);
+            exportTab.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            exportTab.Visible = false; // Ẩn ban đầu
+            this.Controls.Add(exportTab);
 
             connectionTab.Location = new System.Drawing.Point(0, 24);
             connectionTab.Size = new System.Drawing.Size(1000, 676);
@@ -111,7 +145,9 @@ namespace ExcelToOracleImporter
             this.Controls.Add(connectionTab);
 
             // Pass shared config to tabs
+            quickImportTab.SetConfig(config);
             importTab.SetConfig(config);
+            exportTab.SetConfig(config);
             connectionTab.SetConfig(config);
 
             // Refresh connection list in import tab
@@ -126,15 +162,35 @@ namespace ExcelToOracleImporter
             }
         }
 
+        private void ShowQuickImportTab()
+        {
+            quickImportTab.Visible = true;
+            importTab.Visible = false;
+            exportTab.Visible = false;
+            connectionTab.Visible = false;
+        }
+
         private void ShowImportTab()
         {
+            quickImportTab.Visible = false;
             importTab.Visible = true;
+            exportTab.Visible = false;
+            connectionTab.Visible = false;
+        }
+
+        private void ShowExportTab()
+        {
+            quickImportTab.Visible = false;
+            importTab.Visible = false;
+            exportTab.Visible = true;
             connectionTab.Visible = false;
         }
 
         private void ShowConnectionTab()
         {
+            quickImportTab.Visible = false;
             importTab.Visible = false;
+            exportTab.Visible = false;
             connectionTab.Visible = true;
         }
 

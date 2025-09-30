@@ -34,55 +34,47 @@ namespace ExcelToOracleImporter
         {
             InitializeComponent();
             LoadConfiguration();
+            this.Resize += ConnectionManagementTab_Resize;
+            this.Load += ConnectionManagementTab_Load;
         }
 
         private void InitializeComponent()
         {
             this.SuspendLayout();
 
-            // DataGridView for connections
-            dgvConnections = new DataGridView
-            {
-                Location = new System.Drawing.Point(20, 20),
-                Size = new System.Drawing.Size(600, 300),
-                AllowUserToAddRows = false,
-                AllowUserToDeleteRows = false,
-                ReadOnly = true,
-                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
-                MultiSelect = false
-            };
-            dgvConnections.SelectionChanged += DgvConnections_SelectionChanged;
-            this.Controls.Add(dgvConnections);
-
             // Connection Name
             var lblConnectionName = new Label
             {
-                Text = "Connection Name:",
-                Location = new System.Drawing.Point(20, 340),
-                Size = new System.Drawing.Size(100, 20)
+                Text = "Name:",
+                Location = new System.Drawing.Point(20, 20),
+                Size = new System.Drawing.Size(100, 20),
+                Anchor = AnchorStyles.Top | AnchorStyles.Left
             };
             this.Controls.Add(lblConnectionName);
 
             txtConnectionName = new TextBox
             {
-                Location = new System.Drawing.Point(130, 338),
-                Size = new System.Drawing.Size(200, 20)
+                Location = new System.Drawing.Point(130, 18),
+                Size = new System.Drawing.Size(200, 20),
+                Anchor = AnchorStyles.Top | AnchorStyles.Left
             };
             this.Controls.Add(txtConnectionName);
 
             // Connection String
             var lblConnectionString = new Label
             {
-                Text = "Connection String:",
-                Location = new System.Drawing.Point(20, 370),
-                Size = new System.Drawing.Size(100, 20)
+                Text = "Connection:",
+                Location = new System.Drawing.Point(20, 50),
+                Size = new System.Drawing.Size(100, 20),
+                Anchor = AnchorStyles.Top | AnchorStyles.Left
             };
             this.Controls.Add(lblConnectionString);
 
             txtConnectionString = new TextBox
             {
-                Location = new System.Drawing.Point(130, 368),
-                Size = new System.Drawing.Size(600, 20)
+                Location = new System.Drawing.Point(130, 48),
+                Size = new System.Drawing.Size(600, 20),
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
             this.Controls.Add(txtConnectionString);
 
@@ -90,18 +82,20 @@ namespace ExcelToOracleImporter
             var lblOrder = new Label
             {
                 Text = "Order:",
-                Location = new System.Drawing.Point(20, 400),
-                Size = new System.Drawing.Size(100, 20)
+                Location = new System.Drawing.Point(20, 80),
+                Size = new System.Drawing.Size(100, 20),
+                Anchor = AnchorStyles.Top | AnchorStyles.Left
             };
             this.Controls.Add(lblOrder);
 
             numConnectionOrder = new NumericUpDown
             {
-                Location = new System.Drawing.Point(130, 398),
+                Location = new System.Drawing.Point(130, 78),
                 Size = new System.Drawing.Size(80, 20),
                 Minimum = 0,
                 Maximum = 1000,
-                Value = 0
+                Value = 0,
+                Anchor = AnchorStyles.Top | AnchorStyles.Left
             };
             this.Controls.Add(numConnectionOrder);
 
@@ -109,8 +103,9 @@ namespace ExcelToOracleImporter
             btnAddConnection = new Button
             {
                 Text = "Add",
-                Location = new System.Drawing.Point(20, 440),
-                Size = new System.Drawing.Size(80, 30)
+                Location = new System.Drawing.Point(20, 120),
+                Size = new System.Drawing.Size(80, 30),
+                Anchor = AnchorStyles.Top | AnchorStyles.Left
             };
             btnAddConnection.Click += BtnAddConnection_Click;
             this.Controls.Add(btnAddConnection);
@@ -118,8 +113,9 @@ namespace ExcelToOracleImporter
             btnUpdateConnection = new Button
             {
                 Text = "Update",
-                Location = new System.Drawing.Point(110, 440),
-                Size = new System.Drawing.Size(80, 30)
+                Location = new System.Drawing.Point(110, 120),
+                Size = new System.Drawing.Size(80, 30),
+                Anchor = AnchorStyles.Top | AnchorStyles.Left
             };
             btnUpdateConnection.Click += BtnUpdateConnection_Click;
             this.Controls.Add(btnUpdateConnection);
@@ -127,8 +123,9 @@ namespace ExcelToOracleImporter
             btnDeleteConnection = new Button
             {
                 Text = "Delete",
-                Location = new System.Drawing.Point(200, 440),
-                Size = new System.Drawing.Size(80, 30)
+                Location = new System.Drawing.Point(200, 120),
+                Size = new System.Drawing.Size(80, 30),
+                Anchor = AnchorStyles.Top | AnchorStyles.Left
             };
             btnDeleteConnection.Click += BtnDeleteConnection_Click;
             this.Controls.Add(btnDeleteConnection);
@@ -136,11 +133,28 @@ namespace ExcelToOracleImporter
             btnTestSelectedConnection = new Button
             {
                 Text = "Test Connection",
-                Location = new System.Drawing.Point(290, 440),
-                Size = new System.Drawing.Size(120, 30)
+                Location = new System.Drawing.Point(290, 120),
+                Size = new System.Drawing.Size(120, 30),
+                Anchor = AnchorStyles.Top | AnchorStyles.Left
             };
             btnTestSelectedConnection.Click += BtnTestSelectedConnection_Click;
             this.Controls.Add(btnTestSelectedConnection);
+
+            // DataGridView for connections
+            dgvConnections = new DataGridView
+            {
+                Location = new System.Drawing.Point(20, 170),
+                Size = new System.Drawing.Size(960, 500),
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                ReadOnly = true,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                MultiSelect = false,
+                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
+            };
+            dgvConnections.SelectionChanged += DgvConnections_SelectionChanged;
+            this.Controls.Add(dgvConnections);
 
             // Initialize DataGridView columns
             dgvConnections.Columns.Add("Id", "ID");
@@ -149,8 +163,9 @@ namespace ExcelToOracleImporter
             dgvConnections.Columns.Add("Order", "Order");
             
             dgvConnections.Columns["Id"].Visible = false;
-            dgvConnections.Columns["ConnectionString"].Width = 300;
-            dgvConnections.Columns["Order"].Width = 60;
+            dgvConnections.Columns["Name"].Width = 200;
+            dgvConnections.Columns["ConnectionString"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            dgvConnections.Columns["Order"].Width = 80;
 
             this.ResumeLayout(false);
         }
@@ -343,6 +358,33 @@ namespace ExcelToOracleImporter
         private void LogMessage(string message)
         {
             LogMessageRequested?.Invoke(this, message);
+        }
+
+        private void ConnectionManagementTab_Resize(object sender, EventArgs e)
+        {
+            if (dgvConnections != null)
+            {
+                dgvConnections.Size = new System.Drawing.Size(this.Width - 40, this.Height - 200);
+            }
+            
+            if (txtConnectionString != null)
+            {
+                txtConnectionString.Size = new System.Drawing.Size(this.Width - 150, 20);
+            }
+        }
+
+        private void ConnectionManagementTab_Load(object sender, EventArgs e)
+        {
+            // Ensure proper layout when the control is loaded
+            if (dgvConnections != null)
+            {
+                dgvConnections.Size = new System.Drawing.Size(this.Width - 40, this.Height - 200);
+            }
+            
+            if (txtConnectionString != null)
+            {
+                txtConnectionString.Size = new System.Drawing.Size(this.Width - 150, 20);
+            }
         }
     }
 }
