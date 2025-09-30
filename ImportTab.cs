@@ -971,6 +971,7 @@ namespace ExcelToOracleImporter
         {
             var columns = new List<string>();
             var colCount = worksheet.Dimension?.End.Column ?? 0;
+            var usedNames = new HashSet<string>();
 
             if (chkHasHeader.Checked)
             {
@@ -979,6 +980,10 @@ namespace ExcelToOracleImporter
                 {
                     var headerValue = worksheet.Cells[1, col].Value?.ToString() ?? "";
                     var cleanName = CleanColumnName(headerValue);
+                    
+                    // Xử lý trùng tên cột
+                    cleanName = GetUniqueColumnName(cleanName, usedNames);
+                    usedNames.Add(cleanName);
                     columns.Add(cleanName);
                 }
             }
@@ -987,16 +992,22 @@ namespace ExcelToOracleImporter
                 // Tạo tên cột theo format A, B, C...
                 for (int col = 1; col <= colCount; col++)
                 {
+                    string columnName;
                     if (col <= 26)
                     {
-                        columns.Add(((char)('A' + col - 1)).ToString());
+                        columnName = ((char)('A' + col - 1)).ToString();
                     }
                     else
                     {
                         int first = (col - 1) / 26;
                         int second = (col - 1) % 26;
-                        columns.Add($"{(char)('A' + first)}{(char)('A' + second)}");
+                        columnName = $"{(char)('A' + first)}{(char)('A' + second)}";
                     }
+                    
+                    // Xử lý trùng tên cột (mặc dù ít khi xảy ra với A, B, C...)
+                    columnName = GetUniqueColumnName(columnName, usedNames);
+                    usedNames.Add(columnName);
+                    columns.Add(columnName);
                 }
             }
             return columns;
@@ -1041,6 +1052,41 @@ namespace ExcelToOracleImporter
             }
             
             return cleanName.ToUpper();
+        }
+
+        private string GetUniqueColumnName(string baseName, HashSet<string> usedNames)
+        {
+            if (!usedNames.Contains(baseName))
+            {
+                return baseName;
+            }
+
+            // Tìm suffix số phù hợp
+            int suffix = 1;
+            string uniqueName;
+            
+            do
+            {
+                // Tính toán độ dài tối đa cho base name để có chỗ cho suffix
+                int maxBaseLength = 30 - suffix.ToString().Length - 1; // -1 cho dấu _
+                if (maxBaseLength < 1) maxBaseLength = 1;
+                
+                string truncatedBase = baseName.Length > maxBaseLength ? 
+                    baseName.Substring(0, maxBaseLength) : baseName;
+                
+                uniqueName = $"{truncatedBase}_{suffix}";
+                suffix++;
+                
+                // Tránh vòng lặp vô hạn
+                if (suffix > 9999)
+                {
+                    uniqueName = $"COL_{suffix}";
+                    break;
+                }
+            }
+            while (usedNames.Contains(uniqueName));
+
+            return uniqueName;
         }
 
         private async Task AddColumnComments(OracleConnection connection, string tableName, List<string> columnNames, ExcelWorksheet worksheet, bool hasHeader)
