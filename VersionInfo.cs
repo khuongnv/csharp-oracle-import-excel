@@ -4,7 +4,7 @@ namespace ExcelToOracleImporter
 {
     public static class VersionInfo
     {
-        public const string Version = "2.1.1";
+        public const string Version = "2.1.2";
         public const string BuildDate = "2025-09-29";
         public const string LastUpdate = "2025-09-29";
         
@@ -13,23 +13,37 @@ namespace ExcelToOracleImporter
             return $"v{Version} (Build {BuildDate})";
         }
         
-        public static string GetChangelog()
-        {
-            return @"CHANGELOG - Excel to Oracle Database Importer
-================================================
+    public static string GetChangelog()
+    {
+        return @"CHANGELOG - Excel to Oracle Database Importer
+    ================================================
 
-Version 2.1.1 (2025-09-29)
----------------------------
-✨ NEW FEATURES:
-• Added Log menu in Help menu to display changelog
-• Added VersionInfo class for centralized version management
-• Added LogForm for displaying application changelog with version history
+    Version 2.1.2 (2025-09-29)
+    ---------------------------
+    🐛 BUG FIXES:
+    • Fixed duplicate column names issue in Excel import
+    • Added automatic handling of duplicate column names with numeric suffixes
+    • Prevents Oracle table creation errors due to duplicate column names
+    • Maintains Oracle 30-character limit for column names
 
-🔧 IMPROVEMENTS:
-• Enhanced Help menu with Log submenu
-• Improved version display in application title
-• Better changelog formatting and readability
-• Centralized version information management
+    🔧 IMPROVEMENTS:
+    • Enhanced GetColumnNames method with duplicate name detection
+    • Added GetUniqueColumnName method for intelligent name generation
+    • Better error handling for column naming conflicts
+    • Improved data integrity during Excel to Oracle import process
+
+    Version 2.1.1 (2025-09-29)
+    ---------------------------
+    ✨ NEW FEATURES:
+    • Added Log menu in Help menu to display changelog
+    • Added VersionInfo class for centralized version management
+    • Added LogForm for displaying application changelog with version history
+
+    🔧 IMPROVEMENTS:
+    • Enhanced Help menu with Log submenu
+    • Improved version display in application title
+    • Better changelog formatting and readability
+    • Centralized version information management
 
 Version 2.1.0 (2025-09-29)
 ---------------------------
