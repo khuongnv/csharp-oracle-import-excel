@@ -156,6 +156,12 @@ namespace ExcelToOracleImporter
         }
 
         // Public methods để MainForm có thể gọi
+        public void SetConfig(AppConfig sharedConfig)
+        {
+            config = sharedConfig;
+            RefreshConnectionsList();
+        }
+
         public void LoadConfiguration()
         {
             try
@@ -214,7 +220,6 @@ namespace ExcelToOracleImporter
 
             config.ConnectionStrings.Add(newConnection);
             config.ConnectionStrings = config.ConnectionStrings.OrderBy(x => x.Order).ToList();
-            SaveConfiguration();
             
             RefreshConnectionsList();
             ClearConnectionForm();
@@ -249,7 +254,6 @@ namespace ExcelToOracleImporter
                 connection.Order = (int)numConnectionOrder.Value;
                 
                 config.ConnectionStrings = config.ConnectionStrings.OrderBy(x => x.Order).ToList();
-                SaveConfiguration();
                 
                 RefreshConnectionsList();
                 LogMessage($"Đã cập nhật connection: {connection.Name}");
@@ -277,7 +281,6 @@ namespace ExcelToOracleImporter
                 if (connection != null)
                 {
                     config.ConnectionStrings.Remove(connection);
-                    SaveConfiguration();
                     
                     RefreshConnectionsList();
                     ClearConnectionForm();

@@ -79,19 +79,24 @@ namespace ExcelToOracleImporter
             importTab = new ImportTab();
             importTab.LogMessageRequested += (sender, message) => FileLogger.LogInfo(message);
             importTab.StatusUpdateRequested += (sender, status) => { /* Handle status update */ };
-            importTab.ConfigurationSaveRequested += (sender, config) => { this.config = config; config.Save(); };
-            importTab.ConfigurationLoadRequested += (sender, config) => { /* Handle config load */ };
+            importTab.ConfigurationSaveRequested += (sender, cfg) => { 
+                this.config = cfg; 
+                config.Save(); 
+                FileLogger.LogInfo("Configuration saved from ImportTab");
+            };
+            importTab.ConfigurationLoadRequested += (sender, cfg) => { /* Handle config load */ };
 
             // Create Connection Management Tab
             connectionTab = new ConnectionManagementTab();
             connectionTab.LogMessageRequested += (sender, message) => FileLogger.LogInfo(message);
-            connectionTab.ConfigurationSaveRequested += (sender, config) => { 
-                this.config = config; 
-            config.Save();
+            connectionTab.ConfigurationSaveRequested += (sender, cfg) => { 
+                this.config = cfg; 
+                config.Save();
+                FileLogger.LogInfo("Configuration saved from ConnectionManagementTab");
                 // Refresh connection list in import tab when connection is saved
                 RefreshImportTabConnections();
             };
-            connectionTab.ConfigurationLoadRequested += (sender, config) => { /* Handle config load */ };
+            connectionTab.ConfigurationLoadRequested += (sender, cfg) => { /* Handle config load */ };
 
             // Add UserControls to form
             importTab.Location = new System.Drawing.Point(0, 24);
@@ -105,9 +110,9 @@ namespace ExcelToOracleImporter
             connectionTab.Visible = false; // Ẩn ban đầu
             this.Controls.Add(connectionTab);
 
-            // Load configurations
-            importTab.LoadConfiguration();
-            connectionTab.LoadConfiguration();
+            // Pass shared config to tabs
+            importTab.SetConfig(config);
+            connectionTab.SetConfig(config);
 
             // Refresh connection list in import tab
             RefreshImportTabConnections();

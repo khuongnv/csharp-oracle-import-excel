@@ -274,6 +274,22 @@ namespace ExcelToOracleImporter
             }
         }
 
+        public void SetConfig(AppConfig sharedConfig)
+        {
+            config = sharedConfig;
+            
+            txtTableName.Text = config.TableName;
+            chkHasHeader.Checked = config.HasHeader;
+            numBatchSize.Value = config.BatchSize;
+            txtExcelFilePath.Text = config.LastExcelFilePath;
+            
+            // Enable preview button if excel file exists
+            btnPreviewData.Enabled = !string.IsNullOrEmpty(config.LastExcelFilePath) && File.Exists(config.LastExcelFilePath);
+            
+            // Load connection strings
+            RefreshConnectionComboBox(config.ConnectionStrings);
+        }
+
         public void LoadConfiguration()
         {
             try
